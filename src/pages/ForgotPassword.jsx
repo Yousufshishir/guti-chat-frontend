@@ -11,6 +11,12 @@ const ForgotPassword = () => {
     try {
       await authApi.forgotPassword(data.email);
       toast.success('OTP sent to your email');
+      
+      // 👈 এই ২টি লাইন নতুন যোগ করা হলো: 
+      // পেজ রিফ্রেশ দিলেও যাতে টাইমার ঠিক থাকে এবং ইমেইল মুছে না যায়
+      localStorage.setItem('reset_email', data.email);
+      localStorage.setItem('otp_expire_time', Date.now() + 5 * 60 * 1000); // ৫ মিনিট
+
       navigate('/reset-password', { state: { email: data.email } });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to send OTP');

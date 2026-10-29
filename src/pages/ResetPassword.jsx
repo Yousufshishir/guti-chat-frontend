@@ -2,18 +2,28 @@ import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { authApi } from '../api/authApi';
 import { toast } from 'react-toastify';
-import { useState, useEffect } from 'react'; // 👈 useEffect যোগ করা হলো
+import { useState, useEffect } from 'react'; 
 import { tokenStorage } from '../utils/tokenStorage'; 
 
 const ResetPassword = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const prefilledEmail = location.state?.email || '';
+  
+  // 👈 LocalStorage থেকে ইমেইল রিড করা হচ্ছে (রিফ্রেশ দিলেও যাতে ইমেইল থাকে)
+  const prefilledEmail = location.state?.email || localStorage.getItem('reset_email') || '';
+
   const [otpVerified, setOtpVerified] = useState(false);
   const [verifiedOtp, setVerifiedOtp] = useState('');
   
-  // 👈 নতুন যোগ করা হলো: ৫ মিনিট (৩০০ সেকেন্ড) টাইমার স্টেট
-  const [timeLeft, setTimeLeft] = useState(300); 
+  // 👈 LocalStorage থেকে বাকি থাকা টাইম ক্যালকুলেট করা হচ্ছে
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const expireTime = localStorage.getItem('otp_expire_time');
+    if (expireTime) {
+      const remainingSeconds = Math.floor((Number(expireTime) - Date.now()) / 1000);
+      return remainingSeconds > 0 ? remainingSeconds : 0;
+    }
+    return 0; // যদি কোনো টাইম না থাকে তবে ০
+  });
 
   const {
     register,
@@ -22,9 +32,12 @@ const ResetPassword = () => {
     formState: { errors, isSubmitting },
   } = useForm({ defaultValues: { email: prefilledEmail } });
 
-  // 👈 নতুন যোগ করা হলো: টাইমার কাউন্টডাউন লজিক
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0) {
+      // টাইম শেষ হলে LocalStorage থেকে মুছে দেব
+      localStorage.removeItem('otp_expire_time');
+      return;
+    }
 
     const intervalId = setInterval(() => {
       setTimeLeft((prev) => prev - 1);
@@ -33,7 +46,6 @@ const ResetPassword = () => {
     return () => clearInterval(intervalId);
   }, [timeLeft]);
 
-  // মিনিট:সেকেন্ড ফরম্যাটে দেখানোর ফাংশন
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
@@ -61,6 +73,10 @@ const ResetPassword = () => {
       
       tokenStorage.clearTokens();
       
+      // 👈 পাসওয়ার্ড সফলভাবে রিসেট হলে LocalStorage ক্লিয়ার করে দেব
+      localStorage.removeItem('reset_email');
+      localStorage.removeItem('otp_expire_time');
+
       toast.success('Password reset successful. Please login with new password.');
       
       setTimeout(() => {
@@ -79,7 +95,6 @@ const ResetPassword = () => {
         <form onSubmit={handleSubmit(onVerifyOtp)}>
           <div>
             <label>Email</label>
-            {/* আপনার আগের কোডের মতোই এডিটেবল রাখা হয়েছে */}
             <input type="email" {...register('email', { required: 'Email is required' })} />
             {errors.email && <span>{errors.email.message}</span>}
           </div>
@@ -88,11 +103,10 @@ const ResetPassword = () => {
             <input 
               {...register('otp', { required: 'OTP is required' })} 
               placeholder="Enter 6-digit OTP" 
-              disabled={timeLeft === 0} // 👈 টাইমার শেষ হলে ইনপুট বন্ধ হবে
+              disabled={timeLeft === 0} 
             />
             {errors.otp && <span>{errors.otp.message}</span>}
             
-            {/* 👈 টাইমার ডিসপ্লে */}
             <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 'bold', color: timeLeft > 0 ? '#28a745' : '#dc3545' }}>
               {timeLeft > 0 ? (
                 <span>Time remaining: {formatTime(timeLeft)}</span>
@@ -103,7 +117,7 @@ const ResetPassword = () => {
           </div>
           <button 
             type="submit" 
-            disabled={isSubmitting || timeLeft === 0} // 👈 টাইমার শেষ হলে বাটন ডিজেবল
+            disabled={isSubmitting || timeLeft === 0} 
             style={{ backgroundColor: timeLeft === 0 ? '#ccc' : '#007bff' }}
           >
             {isSubmitting ? 'Verifying...' : 'Verify OTP'}
@@ -130,8 +144,6 @@ const ResetPassword = () => {
       )}
       <div className="auth-links" style={{ marginTop: '15px' }}>
         <Link to="/login">Back to Login</Link>
-        
-        {/* 👈 টাইমার শেষ হলে নতুন OTP চাওয়ার লিংক দেখাবে */}
         {timeLeft === 0 && (
           <span style={{ marginLeft: '10px' }}>
             | <Link to="/forgot-password" style={{ color: '#dc3545' }}>Request New OTP</Link>
