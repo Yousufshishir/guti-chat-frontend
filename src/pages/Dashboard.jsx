@@ -30,9 +30,16 @@ const Dashboard = () => {
 
   // 👈 পোস্ট আপডেট হলে (এডিট বা রিঅ্যাক্ট) ফিডের নির্দিষ্ট পোস্ট আপডেট করা
   const handlePostUpdated = (updatedPost) => {
-    setPosts((prev) => prev.map((p) => (p._id === updatedPost._id ? updatedPost : p)));
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p._id === updatedPost._id) {
+          // পুরোনো user ডেটা (নাম, ছবি) ধরে রেখে বাকি ডেটা আপডেট করা
+          return { ...p, ...updatedPost, user: p.user }; 
+        }
+        return p;
+      })
+    );
   };
-
   // 👈 পোস্ট ডিলিট হলে ফিড থেকে বাদ দেওয়া
   const handlePostDeleted = (postId) => {
     setPosts((prev) => prev.filter((p) => p._id !== postId));

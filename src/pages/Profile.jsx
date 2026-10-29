@@ -30,7 +30,15 @@ const Profile = () => {
   };
 
   const handlePostUpdated = (updatedPost) => {
-    setPosts((prev) => prev.map((p) => (p._id === updatedPost._id ? updatedPost : p)));
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p._id === updatedPost._id) {
+          // পুরোনো user ডেটা (নাম, ছবি) ধরে রেখে বাকি ডেটা আপডেট করা
+          return { ...p, ...updatedPost, user: p.user }; 
+        }
+        return p;
+      })
+    );
   };
 
   const handlePostDeleted = (postId) => {

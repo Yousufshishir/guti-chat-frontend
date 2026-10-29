@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { timeAgo } from '../../utils/timeAgo';
 import { decryptText, encryptText } from '../../utils/crypto';
 import { postApi } from '../../api/postApi';
 import { toast } from 'react-toastify';
 import { useAuth } from '../../hooks/useAuth';
+import React from 'react'; // 👈 React.memo এর জন্য
 
 const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
   const { user } = useAuth();
@@ -11,26 +12,33 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
 
   const [showOptions, setShowOptions] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(decryptText(post.textContent));
+  const [editContent, setEditContent] = useState(useMemo(() => decryptText(post.textContent), [post.textContent]));
   const [editVisibility, setEditVisibility] = useState(post.visibility);
   const [isSaving, setIsSaving] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
 
+  // 👈 লোকাল স্টেট (ইনস্ট্যান্ট আপডেটের জন্য)
+  const [localReactions, setLocalReactions] = useState(post.reactions || []);
+  const [localVisibility, setLocalVisibility] = useState(post.visibility);
+
   const isOwner = post.user?._id === user?._id;
 
-  // ১. ডিলিট লজিক
+  // 👈 ১. ডিক্রিপশন মেমোাইজ করা হলো (বার বার ডিক্রিপ্ট হবে না)
+  const decryptedText = useMemo(() => {
+    return post.textContent ? decryptText(post.textContent) : '';
+  }, [post.textContent]);
+
   const handleDelete = async () => {
     if (!window.confirm('Are you sure you want to delete this post?')) return;
     try {
       await postApi.deletePost(post._id);
-      toast.success('Post deleted successfully');
+      toast.success('Post deleted');
       onPostDeleted(post._id);
     } catch (err) {
       toast.error('Failed to delete post');
     }
   };
 
-  // ২. এডিট সেভ লজিক
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
@@ -43,6 +51,7 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
       });
       toast.success('Post updated!');
       setIsEditing(false);
+      setLocalVisibility(editVisibility); // লোকাল স্টেট আপডেট
       onPostUpdated(res.data.data); 
     } catch (err) {
       toast.error('Failed to update post');
@@ -51,65 +60,78 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
     }
   };
 
-  // ৩. ভিজিবিলিটি চেঞ্জ লজিক (সরাসরি সিলেক্ট করার জন্য)
   const handleSetVisibility = async (newVisibility) => {
-    if (post.visibility === newVisibility) {
+    if (localVisibility === newVisibility) {
       setShowOptions(false);
       return;
     }
+    setLocalVisibility(newVisibility); // 👈 ইনস্ট্যান্ট আপডেট
+    setShowOptions(false);
     try {
       const res = await postApi.togglePostVisibility(post._id);
-      toast.success(res.data.message);
       onPostUpdated(res.data.data);
-      setShowOptions(false);
     } catch (err) {
+      setLocalVisibility(post.visibility); // ফেইল করলে রিভার্ট
       toast.error('Failed to change visibility');
     }
   };
 
-  // ৪. রিঅ্যাক্ট লজিক
+  // 👈 ২. Optimistic UI (ইনস্ট্যান্ট রিঅ্যাকশন)
   const handleReact = async (reactionType) => {
+    setShowReactions(false);
+    
+    // আগের রিঅ্যাকশন বের করা
+    const existingIndex = localReactions.findIndex(r => (r.user === user?._id || r.user?._id === user?._id));
+    let newReactions = [...localReactions];
+
+    if (existingIndex > -1) {
+      if (newReactions[existingIndex].type === reactionType) {
+        newReactions.splice(existingIndex, 1); // রিমুভ
+      } else {
+        newReactions[existingIndex] = { ...newReactions[existingIndex], type: reactionType }; // চেঞ্জ
+      }
+    } else {
+      newReactions.push({ user: { _id: user?._id, name: user?.name }, type: reactionType }); // নতুন
+    }
+    setLocalReactions(newReactions); // 👈 সাথে সাথে স্ক্রিনে আপডেট হবে
+
     try {
       const res = await postApi.reactToPost(post._id, reactionType);
       onPostUpdated(res.data.data);
-      setShowReactions(false);
     } catch (err) {
+      setLocalReactions(post.reactions); // সার্ভার ফেইল করলে আগের অবস্থায় ফিরবে
       toast.error('Failed to react');
     }
   };
 
-  const userReaction = post.reactions?.find((r) => r.user === user?._id || r.user?._id === user?._id);
+  const userReaction = localReactions.find((r) => r.user === user?._id || r.user?._id === user?._id);
   const reactionIcons = { like: '👍', love: '❤️', haha: '😂', wow: '😮', sad: '😢', angry: '😡' };
 
   return (
     <div className="fb-card">
       <div className="fb-post-header" style={{ justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <img src={post.user?.avatarUrl || defaultAvatar} alt="Author" className="fb-avatar-small" />
+          <img src={post.user?.avatarUrl || defaultAvatar} alt="Author" className="fb-avatar-small" loading="lazy" />
           <div>
             <h4 className="fb-post-author">{post.user?.name || 'Deleted User'}</h4>
             <span className="fb-post-time">
-              {timeAgo(post.createdAt)} · {post.visibility === 'public' ? '🌍 Public' : '👥 Friends'}
+              {timeAgo(post.createdAt)} · {localVisibility === 'public' ? '🌍 Public' : '👥 Friends'}
             </span>
           </div>
         </div>
 
-        {/* 👈 ৩-ডট মেনু */}
         {isOwner && (
           <div style={{ position: 'relative' }}>
             <button onClick={() => setShowOptions(!showOptions)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', fontWeight: 'bold' }}>⋮</button>
             {showOptions && (
               <div className="post-dropdown">
                 <div onClick={() => { setIsEditing(true); setShowOptions(false); }}>✏️ Edit Post</div>
-                
-                {/* 👈 নতুন: সরাসরি ভিজিবিলিটি সিলেক্ট করার অপশন */}
-                <div onClick={() => handleSetVisibility('public')} style={{ color: post.visibility === 'public' ? '#1877f2' : '#000' }}>
-                  🌍 Make Public {post.visibility === 'public' && '✓'}
+                <div onClick={() => handleSetVisibility('public')} style={{ color: localVisibility === 'public' ? '#1877f2' : '#000' }}>
+                  🌍 Make Public {localVisibility === 'public' && '✓'}
                 </div>
-                <div onClick={() => handleSetVisibility('friends')} style={{ color: post.visibility === 'friends' ? '#1877f2' : '#000' }}>
-                  👥 Make Friends Only {post.visibility === 'friends' && '✓'}
+                <div onClick={() => handleSetVisibility('friends')} style={{ color: localVisibility === 'friends' ? '#1877f2' : '#000' }}>
+                  👥 Make Friends Only {localVisibility === 'friends' && '✓'}
                 </div>
-                
                 <div onClick={handleDelete} style={{ color: 'red' }}>🗑️ Delete Post</div>
               </div>
             )}
@@ -135,12 +157,12 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
         </div>
       ) : (
         <div className="fb-post-content">
-          {post.textContent && <p style={{ marginBottom: post.mediaUrl ? '10px' : '0' }}>{decryptText(post.textContent)}</p>}
+          {decryptedText && <p style={{ marginBottom: post.mediaUrl ? '10px' : '0' }}>{decryptedText}</p>}
           
           {post.mediaUrl && (
             <div style={{ textAlign: 'center', marginTop: '10px' }}>
               {post.mediaType === 'image' ? (
-                <img src={post.mediaUrl} alt="Post Media" style={{ maxHeight: '400px', maxWidth: '100%', borderRadius: '8px', objectFit: 'contain' }} />
+                <img src={post.mediaUrl} alt="Post Media" style={{ maxHeight: '400px', maxWidth: '100%', borderRadius: '8px', objectFit: 'contain' }} loading="lazy" />
               ) : post.mediaType === 'video' ? (
                 <video src={post.mediaUrl} controls style={{ maxHeight: '400px', maxWidth: '100%', borderRadius: '8px' }} />
               ) : null}
@@ -149,10 +171,7 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
         </div>
       )}
 
-      {/* পোস্ট অ্যাকশনস */}
       <div className="fb-post-actions" style={{ position: 'relative', display: 'flex', justifyContent: 'space-around', alignItems: 'center' }}>
-        
-        {/* 👈 রিঅ্যাকশন কন্টেইনার (হোভার ফিক্স) */}
         <div 
           style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}
           onMouseEnter={() => setShowReactions(true)}
@@ -163,10 +182,9 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
             onClick={() => handleReact(userReaction?.type === 'like' ? 'like' : 'like')} 
           >
             {userReaction ? reactionIcons[userReaction.type] : '👍'} {userReaction ? userReaction.type.charAt(0).toUpperCase() + userReaction.type.slice(1) : 'Like'}
-            {post.reactions?.length > 0 && <span style={{ marginLeft: '5px', fontSize: '12px' }}>({post.reactions.length})</span>}
+            {localReactions?.length > 0 && <span style={{ marginLeft: '5px', fontSize: '12px' }}>({localReactions.length})</span>}
           </div>
 
-          {/* 👈 রিঅ্যাকশন পপআপ */}
           {showReactions && (
             <div className="reactions-popup">
               {Object.keys(reactionIcons).map((type) => (
@@ -175,7 +193,6 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
             </div>
           )}
         </div>
-
         <span>💬 Comment</span>
         <span>↗️ Share</span>
       </div>
@@ -183,4 +200,7 @@ const PostCard = ({ post, onPostUpdated, onPostDeleted }) => {
   );
 };
 
-export default PostCard;
+// 👈 ৩. React.memo দিয়ে কম্পোনেন্ট অপটিমাইজ করা হলো
+export default React.memo(PostCard, (prevProps, nextProps) => {
+  return prevProps.post.updatedAt === nextProps.post.updatedAt;
+});
