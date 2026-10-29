@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { postApi } from '../../api/postApi';
 import { toast } from 'react-toastify';
+import { encryptText } from '../../utils/crypto'; // 👈 ইমপোর্ট করুন
 
 const CreatePost = ({ onPostCreated }) => {
   const { user } = useAuth();
@@ -16,10 +17,18 @@ const CreatePost = ({ onPostCreated }) => {
 
     setIsPosting(true);
     try {
-      await postApi.createPost({ textContent: postContent, mediaType: 'none', visibility: postVisibility });
+      // 👈 পোস্ট পাঠানোর আগে এনক্রিপ্ট করে নিচ্ছি
+      const encryptedContent = encryptText(postContent);
+
+      await postApi.createPost({ 
+        textContent: encryptedContent, // 👈 এনক্রিপ্টেড টেক্সট যাচ্ছে
+        mediaType: 'none', 
+        visibility: postVisibility 
+      });
+      
       setPostContent('');
       toast.success('Post created successfully!');
-      onPostCreated(); // পোস্ট হলে ড্যাশবোর্ডকে জানাবে ফিড রিফ্রেশ করার জন্য
+      onPostCreated(); 
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create post');
     } finally {
@@ -28,6 +37,7 @@ const CreatePost = ({ onPostCreated }) => {
   };
 
   return (
+    // ... আগের JSX কোড হুবহু একই থাকবে
     <div className="fb-card">
       <form onSubmit={handleCreatePost} className="fb-create-post-form">
         <div className="fb-create-post">

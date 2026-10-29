@@ -3,7 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { postApi } from '../api/postApi';
 import { toast } from 'react-toastify';
-import './Profile.css';
+import { decryptText } from '../utils/crypto'; // 👈 ডিক্রিপ্ট ফাংশন
+import '../styles/profile.css'; // 👈 এখানে পাথ আপডেট করা হলো
 
 const Profile = () => {
   const { user } = useAuth();
@@ -31,7 +32,7 @@ const Profile = () => {
     }
   };
 
-  // পোস্টের সময় ফরম্যাট করার ফাংশন
+  // পোস্টের সময় ফরম্যাট করার ফাংশন
   const timeAgo = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -77,7 +78,6 @@ const Profile = () => {
             </div>
 
             <div className="profile-actions">
-              {/* এখানে ক্লিক করলে এডিট প্রোফাইল পেজে যাবে */}
               <Link to="/edit-profile" className="btn-edit-profile">
                 Edit Profile
               </Link>
@@ -113,7 +113,8 @@ const Profile = () => {
                 </div>
 
                 <div className="fb-post-content">
-                  <p>{post.textContent}</p>
+                  {/* 👈 এখানে ডিক্রিপ্ট করা টেক্সট দেখানো হচ্ছে */}
+                  <p>{decryptText(post.textContent)}</p>
                 </div>
 
                 <div className="fb-post-actions">

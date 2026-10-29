@@ -1,4 +1,5 @@
 import { timeAgo } from '../../utils/timeAgo';
+import { decryptText } from '../../utils/crypto'; // 👈 ইমপোর্ট করুন
 
 const PostCard = ({ post }) => {
   const defaultAvatar = 'https://via.placeholder.com/150';
@@ -15,7 +16,8 @@ const PostCard = ({ post }) => {
         </div>
       </div>
       <div className="fb-post-content">
-        <p>{post.textContent}</p>
+        {/* 👈 এখানে ডিক্রিপ্ট করে দেখানো হচ্ছে */}
+        <p>{decryptText(post.textContent)}</p>
       </div>
       <div className="fb-post-actions">
         <span>👍 Like</span>

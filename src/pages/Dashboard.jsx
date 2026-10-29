@@ -6,8 +6,7 @@ import Sidebar from '../components/layout/Sidebar';
 import RightSidebar from '../components/layout/RightSidebar';
 import CreatePost from '../components/posts/CreatePost';
 import PostCard from '../components/posts/PostCard';
-import './Dashboard.css';
-
+import "../styles/dashboard.css";
 const Dashboard = () => {
   const [posts, setPosts] = useState([]);
   const [loadingFeed, setLoadingFeed] = useState(true);
