@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react'; // 👈 useRef ইমপোর্ট করুন
 import { useAuth } from '../../hooks/useAuth';
 import { postApi } from '../../api/postApi';
-import { mediaApi } from '../../api/mediaApi'; // 👈 mediaApi ইমপোর্ট করুন
+import { mediaApi } from '../../api/mediaApi'; 
 import { toast } from 'react-toastify';
 import { encryptText } from '../../utils/crypto';
 import axios from 'axios';
@@ -12,15 +12,20 @@ const CreatePost = ({ onPostCreated }) => {
   const [postVisibility, setPostVisibility] = useState('public');
   const [isPosting, setIsPosting] = useState(false);
 
-  // 👈 নতুন: মিডিয়া আপলোডের স্টেট
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState(null);
   const [mediaType, setMediaType] = useState('none');
   const [isUploading, setIsUploading] = useState(false);
+  
+  const fileInputRef = useRef(null); // 👈 রেফ তৈরি করুন
 
   const defaultAvatar = 'https://via.placeholder.com/150';
 
-  // 👈 নতুন: ফাইল সিলেক্ট করার ফাংশন
+  // 👈 বাটনে ক্লিক করলে হিডেন ইনপুটে ক্লিক হবে
+  const handleButtonClick = () => {
+    fileInputRef.current.click();
+  };
+
   const handleMediaSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -31,13 +36,13 @@ const CreatePost = ({ onPostCreated }) => {
     if (!isImage && !isVideo) {
       return toast.error('Please select an image or video file.');
     }
-    if (file.size > 20 * 1024 * 1024) { // 20MB লিমিট
+    if (file.size > 20 * 1024 * 1024) { 
       return toast.error('File size must be less than 20MB.');
     }
 
     setMediaFile(file);
     setMediaType(isImage ? 'image' : 'video');
-    setMediaPreview(URL.createObjectURL(file)); // প্রিভো দেখানোর জন্য
+    setMediaPreview(URL.createObjectURL(file)); 
   };
 
   const removeMedia = () => {
@@ -55,7 +60,6 @@ const CreatePost = ({ onPostCreated }) => {
     let uploadedMediaPublicId = null;
 
     try {
-      // ১. যদি মিডিয়া ফাইল থাকে, তবে Cloudinary-তে আপলোড করি
       if (mediaFile) {
         setIsUploading(true);
         const response = await mediaApi.getUploadSignature();
@@ -83,8 +87,7 @@ const CreatePost = ({ onPostCreated }) => {
         setIsUploading(false);
       }
 
-      // ২. পোস্ট তৈরি করা
-      const encryptedContent = postContent.trim() ? encryptText(postContent) : ''; // টেক্সট না থাকলে খালি
+      const encryptedContent = postContent.trim() ? encryptText(postContent) : '';
 
       await postApi.createPost({ 
         textContent: encryptedContent, 
@@ -94,7 +97,6 @@ const CreatePost = ({ onPostCreated }) => {
         visibility: postVisibility 
       });
       
-      // ৩. স্টেট রিসেট করা
       setPostContent('');
       setMediaFile(null);
       setMediaPreview(null);
@@ -123,7 +125,6 @@ const CreatePost = ({ onPostCreated }) => {
           />
         </div>
 
-        {/* 👈 নতুন: মিডিয়া প্রিভো সেকশন */}
         {mediaPreview && (
           <div style={{ position: 'relative', marginBottom: '10px', textAlign: 'center' }}>
             {mediaType === 'image' ? (
@@ -148,17 +149,23 @@ const CreatePost = ({ onPostCreated }) => {
               <option value="friends">👥 Friends</option>
             </select>
 
-            {/* 👈 নতুন: ফাইল সিলেক্ট বাটন */}
-            <label style={{ cursor: 'pointer', fontWeight: 'bold', color: '#45bd62' }}>
+            {/* 👈 label এর বদলে button */}
+            <button 
+              type="button"
+              onClick={handleButtonClick} 
+              style={{ cursor: 'pointer', fontWeight: 'bold', color: '#45bd62', background: 'none', border: 'none', fontSize: '15px' }}
+            >
               📷 Photo/Video
-              <input 
-                type="file" 
-                accept="image/*,video/*" 
-                onChange={handleMediaSelect} 
-                style={{ display: 'none' }} 
-                disabled={isPosting || isUploading}
-              />
-            </label>
+            </button>
+            {/* 👈 ref যুক্ত করা হলো */}
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              accept="image/*,video/*" 
+              onChange={handleMediaSelect} 
+              style={{ display: 'none' }} 
+              disabled={isPosting || isUploading}
+            />
           </div>
 
           <button type="submit" className="fb-post-btn" disabled={(!postContent.trim() && !mediaFile) || isPosting || isUploading}>

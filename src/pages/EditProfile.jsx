@@ -1,16 +1,17 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react'; // 👈 useRef ইমপোর্ট করুন
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../hooks/useAuth';
 import { userApi } from '../api/userApi';
 import { mediaApi } from '../api/mediaApi';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // 👈 Cloudinary-তে আপলোড করার জন্য
+import axios from 'axios';
 
 const EditProfile = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [uploading, setUploading] = useState(false); // আপলোড লোডিং স্টেট
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null); // 👈 রেফ তৈরি করুন
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({
     defaultValues: {
@@ -21,9 +22,13 @@ const EditProfile = () => {
     }
   });
 
-  const currentAvatar = watch('avatarUrl'); // লাইভ প্রিভোর জন্য
+  const currentAvatar = watch('avatarUrl');
 
-  // 👇 ডিভাইস থেকে ছবি সিলেক্ট করার ফাংশন
+  // 👈 বাটনে ক্লিক করলে হিডেন ইনপুটে ক্লিক হবে
+  const handleButtonClick = () => {
+    fileInputRef.current.click();
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -31,32 +36,25 @@ const EditProfile = () => {
     if (!file.type.startsWith('image/')) {
       return toast.error('Please select an image file.');
     }
-    if (file.size > 5 * 1024 * 1024) {
-      return toast.error('Image size must be less than 5MB.');
+    if (file.size > 20 * 1024 * 1024) { // 👈 20MB লিমিট
+      return toast.error('Image size must be less than 20MB.');
     }
 
     setUploading(true);
     const toastId = toast.loading('Uploading image to Cloudinary...');
 
     try {
-      // ১. ব্যাকএন্ড থেকে সিগনেচার নিন
       const response = await mediaApi.getUploadSignature();
       const sigData = response.data.data ? response.data.data : response.data;
-      
-      // 👈 allowedFormats যুক্ত করা হলো
       const { signature, timestamp, folder, type, allowedFormats, apiKey, cloudName } = sigData;
 
-      // ২. Cloudinary-তে ফাইল আপলোড করুন
       const formData = new FormData();
       formData.append('file', file);
       formData.append('api_key', apiKey);
       formData.append('timestamp', timestamp);
       formData.append('signature', signature);
-      
       if (folder) formData.append('folder', folder);
       if (type) formData.append('type', type);
-      
-      // 👈 সবচেয়ে গুরুত্বপূর্ণ ফিক্স: allowed_formats পাঠানো হচ্ছে
       if (allowedFormats && allowedFormats.length > 0) {
         formData.append('allowed_formats', allowedFormats.join(','));
       }
@@ -67,7 +65,6 @@ const EditProfile = () => {
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
 
-      // ৩. সফল হলে URL টি ফর্মে সেট করুন
       setValue('avatarUrl', cloudinaryRes.data.secure_url);
       toast.update(toastId, { render: 'Image uploaded successfully!', type: 'success', isLoading: false, autoClose: 2000 });
 
@@ -79,6 +76,7 @@ const EditProfile = () => {
       setUploading(false);
     }
   };
+
   const onSubmit = async (data) => {
     try {
       const res = await userApi.updateProfile(data);
@@ -91,11 +89,10 @@ const EditProfile = () => {
   };
 
   return (
-    <div className="auth-container" style={{ maxWidth: '500px' }}>
+    <div className="auth-container" style={{ maxWidth: '500px', marginTop: '100px' }}>
       <h2>Edit Profile</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
         
-        {/* 👇 ইমেজ আপলোড সেকশন */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <img 
             src={currentAvatar || 'https://via.placeholder.com/100'} 
@@ -103,12 +100,18 @@ const EditProfile = () => {
             style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', border: '2px solid #ddd' }} 
           />
           <div style={{ marginTop: '10px' }}>
-            <label htmlFor="file-upload" style={{ cursor: 'pointer', backgroundColor: '#007bff', color: 'white', padding: '8px 15px', borderRadius: '5px', fontSize: '14px' }}>
+            {/* 👈 label এর বদলে button ব্যবহার করা হলো */}
+            <button 
+              type="button" 
+              onClick={handleButtonClick} 
+              style={{ cursor: 'pointer', backgroundColor: '#007bff', color: 'white', padding: '8px 15px', borderRadius: '5px', fontSize: '14px', border: 'none' }}
+            >
               {uploading ? 'Uploading...' : 'Choose from Device'}
-            </label>
+            </button>
+            {/* 👈 ref যুক্ত করা হলো */}
             <input 
-              id="file-upload" 
               type="file" 
+              ref={fileInputRef}
               accept="image/*" 
               onChange={handleImageUpload} 
               style={{ display: 'none' }} 
@@ -127,7 +130,6 @@ const EditProfile = () => {
           <input {...register('bio')} placeholder="Tell us about yourself" />
         </div>
         
-        {/* URL ফিল্ডটি লুকানো রাখা হলো, কারণ আপলোড হলেই এটি অটো-ফিল হবে */}
         <input type="hidden" {...register('avatarUrl')} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '15px' }}>
