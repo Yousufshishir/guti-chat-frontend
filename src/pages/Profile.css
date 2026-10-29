@@ -1,0 +1,103 @@
+/* Profile.css */
+.profile-container {
+  max-width: 900px;
+  margin: 70px auto 20px;
+  padding: 0 20px;
+}
+
+.profile-header-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.profile-cover {
+  height: 200px;
+  background: linear-gradient(to right, #1877f2, #4facfe);
+  width: 100%;
+}
+
+.profile-info-section {
+  padding: 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.profile-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  object-fit: cover;
+  margin-top: -80px; /* কভারের ওপর ওভারল্যাপ করার জন্য */
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 10px 0 5px;
+}
+
+.profile-username {
+  color: #65676b;
+  font-size: 15px;
+  margin-bottom: 15px;
+}
+
+.profile-bio {
+  font-size: 15px;
+  color: #050505;
+  max-width: 600px;
+  margin-bottom: 15px;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #65676b;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  justify-content: center;
+  border-top: 1px solid #e4e6eb;
+  padding-top: 15px;
+}
+
+.btn-edit-profile {
+  background-color: #1877f2;
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-edit-profile:hover {
+  background-color: #166fe5;
+}
+
+.profile-posts-section {
+  margin-top: 20px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  color: #050505;
+}

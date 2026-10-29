@@ -1,0 +1,62 @@
+.auth-container {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+  margin: 100px auto; /* স্ক্রিনের মাঝখানে আনতে */
+}
+
+.auth-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.auth-container form div {
+  margin-bottom: 15px;
+}
+
+.auth-container label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.auth-container input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.auth-container button {
+  width: 100%;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+.auth-container button:hover {
+  background-color: #0056b3;
+}
+
+.auth-container span {
+  color: red;
+  font-size: 12px;
+}
+
+.auth-links {
+  text-align: center;
+  margin-top: 15px;
+}
+
+.auth-links a {
+  color: #007bff;
+  text-decoration: none;
+}

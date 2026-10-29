@@ -3,6 +3,32 @@
   margin: 0;
   padding: 0;
 }
+/* src/index.css */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f2f5; /* ড্যাশবোর্ডের ব্যাকগ্রাউন্ড */
+  min-height: 100vh;
+  /* display: flex;  👈 এগুলো সরিয়ে দিন */
+  /* justify-content: center; */
+  /* align-items: center; */
+}
+
+/* Login/Register এর জন্য সেন্টার করা */
+.auth-container {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 400px;
+  margin: 100px auto; /* 👈 স্ক্রিনের মাঝখানে আনতে */
+}
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f6f8;
