@@ -113,9 +113,18 @@ const Profile = () => {
                 </div>
 
                 <div className="fb-post-content">
-                  {/* 👈 এখানে ডিক্রিপ্ট করা টেক্সট দেখানো হচ্ছে */}
-                  <p>{decryptText(post.textContent)}</p>
-                </div>
+  {post.textContent && <p style={{ marginBottom: post.mediaUrl ? '10px' : '0' }}>{decryptText(post.textContent)}</p>}
+  
+  {post.mediaUrl && (
+    <div style={{ textAlign: 'center', marginTop: '10px' }}>
+      {post.mediaType === 'image' ? (
+        <img src={post.mediaUrl} alt="Post Media" style={{ maxHeight: '400px', maxWidth: '100%', borderRadius: '8px', objectFit: 'contain' }} />
+      ) : post.mediaType === 'video' ? (
+        <video src={post.mediaUrl} controls style={{ maxHeight: '400px', maxWidth: '100%', borderRadius: '8px' }} />
+      ) : null}
+    </div>
+  )}
+</div>
 
                 <div className="fb-post-actions">
                   <span>👍 Like</span>
