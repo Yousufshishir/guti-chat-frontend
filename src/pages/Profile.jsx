@@ -3,13 +3,19 @@ import { useAuth } from '../hooks/useAuth';
 import { Link } from 'react-router-dom';
 import { postApi } from '../api/postApi';
 import { toast } from 'react-toastify';
-import PostCard from '../components/posts/PostCard'; // 👈 PostCard কম্পোনেন্ট ইমপোর্ট করুন
+import PostCard from '../components/posts/PostCard';
 import '../styles/profile.css';
 
 const Profile = () => {
   const { user } = useAuth();
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  
+  // 👈 ১. প্রোফাইলের জন্য আলাদা ক্যাশে
+  const [posts, setPosts] = useState(() => {
+    const cachedPosts = localStorage.getItem(`guti_profile_${user?._id}`);
+    return cachedPosts ? JSON.parse(cachedPosts) : [];
+  });
+  
+  const [loading, setLoading] = useState(posts.length === 0);
 
   useEffect(() => {
     if (user?._id) {
@@ -19,9 +25,12 @@ const Profile = () => {
 
   const fetchUserPosts = async () => {
     try {
-      setLoading(true);
       const response = await postApi.getUserPosts(user._id);
-      setPosts(response.data.data || response.data);
+      const newPosts = response.data.data || response.data;
+      
+      setPosts(newPosts);
+      // 👈 ২. প্রোফাইলের ডেটা সেভ করা
+      localStorage.setItem(`guti_profile_${user._id}`, JSON.stringify(newPosts)); 
     } catch (err) {
       toast.error('Failed to load your posts');
     } finally {
@@ -30,19 +39,24 @@ const Profile = () => {
   };
 
   const handlePostUpdated = (updatedPost) => {
-    setPosts((prev) =>
-      prev.map((p) => {
+    setPosts((prev) => {
+      const updated = prev.map((p) => {
         if (p._id === updatedPost._id) {
-          // পুরোনো user ডেটা (নাম, ছবি) ধরে রেখে বাকি ডেটা আপডেট করা
-          return { ...p, ...updatedPost, user: p.user }; 
+          return { ...p, ...updatedPost, user: p.user };
         }
         return p;
-      })
-    );
+      });
+      localStorage.setItem(`guti_profile_${user._id}`, JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const handlePostDeleted = (postId) => {
-    setPosts((prev) => prev.filter((p) => p._id !== postId));
+    setPosts((prev) => {
+      const filtered = prev.filter((p) => p._id !== postId);
+      localStorage.setItem(`guti_profile_${user._id}`, JSON.stringify(filtered));
+      return filtered;
+    });
   };
 
   return (
