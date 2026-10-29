@@ -260,16 +260,88 @@
 }
 
 /* ================= Mobile Responsive ================= */
+/* ================= Mobile Responsive ================= */
+
+/* ডেস্কটপে হ্যামবার্গার বাটন ও ক্লোজ বাটন হাইড থাকবে */
+.mobile-menu-btn, .mobile-close-btn, .mobile-overlay {
+  display: none;
+}
+
 @media (max-width: 900px) {
-  .fb-left-sidebar,
-  .fb-right-sidebar {
-    display: none; 
+  .fb-search {
+    display: none; /* মোবাইলে সার্চ বার হাইড */
   }
+
+  .fb-navbar {
+    padding: 0 15px;
+  }
+
+  .fb-nav-right .fb-logout-btn {
+    display: none; /* মোবাইলে লগআউট বাটন হাইড (সাইডবারে থাকবে) */
+  }
+
+  /* 👈 হ্যামবার্গার বাটন ডিসপ্লে */
+  .mobile-menu-btn {
+    display: block;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #1877f2;
+    margin-right: 10px;
+  }
+
+  .fb-main-container {
+    padding: 10px;
+  }
+
   .fb-feed-area {
     width: 100%;
   }
-  .fb-search {
-    display: none;
+
+  .fb-right-sidebar {
+    display: none; /* ডান সাইডবার মোবাইলে হাইড */
+  }
+
+  /* 👈 সাইডবারকে মোবাইলের জন্য স্লাইডিং মেনু বানানো হলো */
+  .fb-left-sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px; /* শুরুতে স্ক্রিনের বাইরে থাকবে */
+    width: 280px;
+    height: 100vh;
+    background-color: #fff;
+    z-index: 2000;
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    transition: left 0.3s ease;
+  }
+
+  /* 👈 মেনু ওপেন হলে স্ক্রিনে ঢুকে আসবে */
+  .fb-left-sidebar.open {
+    left: 0;
+  }
+
+  .mobile-close-btn {
+    display: block;
+    text-align: right;
+    font-size: 24px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    color: #dc3545;
+    font-weight: bold;
+  }
+
+  /* 👈 মেনু ওপেন হলে পেছনের স্ক্রিন কালো হবে */
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1999;
   }
 }
 /* Post Dropdown Options */

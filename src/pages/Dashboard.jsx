@@ -10,14 +10,17 @@ import SkeletonPostCard from '../components/posts/SkeletonPostCard';
 import '../styles/dashboard.css';
 
 const Dashboard = () => {
-  // 👈 ১. localStorage থেকে আগের ডেটা রিড করা (যদি থাকে)
+  // ১. localStorage থেকে আগের ডেটা রিড করা (যদি থাকে)
   const [posts, setPosts] = useState(() => {
     const cachedPosts = localStorage.getItem('guti_feed');
     return cachedPosts ? JSON.parse(cachedPosts) : [];
   });
   
-  // 👈 ২. যদি ক্যাশে ডেটা থাকে, তবে loading false হবে (সাথে সাথে পোস্ট দেখাবে)
+  // ২. যদি ক্যাশে ডেটা থাকে, তবে loading false হবে (সাথে সাথে পোস্ট দেখাবে)
   const [loadingFeed, setLoadingFeed] = useState(posts.length === 0);
+
+  // 👈 ৩. মোবাইল মেনু ওপেন/ক্লোজ করার নতুন স্টেট
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchFeed();
@@ -29,7 +32,7 @@ const Dashboard = () => {
       const newPosts = response.data.data || response.data;
       
       setPosts(newPosts);
-      // 👈 ৩. নতুন ডেটা localStorage-এ সেভ করে রাখা
+      // ৪. নতুন ডেটা localStorage-এ সেভ করে রাখা
       localStorage.setItem('guti_feed', JSON.stringify(newPosts)); 
     } catch (err) {
       toast.error('Failed to load feed');
@@ -61,14 +64,20 @@ const Dashboard = () => {
 
   return (
     <div>
-      <Navbar />
+      {/* 👈 Navbar-এ মেনু টগল করার ফাংশন পাঠানো হলো */}
+      <Navbar toggleMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+      
       <div className="fb-main-container">
-        <Sidebar />
+        {/* 👈 Sidebar-এ ওপেন/ক্লোজ স্টেট এবং ফাংশন পাঠানো হলো */}
+        <Sidebar 
+          isOpen={isMobileMenuOpen} 
+          closeMenu={() => setIsMobileMenuOpen(false)} 
+        />
         
         <main className="fb-feed-area">
           <CreatePost onPostCreated={fetchFeed} />
 
-          {/* 👈 ৪. Skeleton তখনই দেখাবে যদি আদৌ কোনো ক্যাশে বা ডেটা না থাকে */}
+          {/* ৫. Skeleton তখনই দেখাবে যদি আদৌ কোনো ক্যাশে বা ডেটা না থাকে */}
           {loadingFeed ? (
             <>
               <SkeletonPostCard />
