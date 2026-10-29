@@ -272,3 +272,89 @@
     display: none;
   }
 }
+/* Post Dropdown Options */
+.post-dropdown {
+  position: absolute;
+  top: 30px;
+  right: 0;
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 10;
+  width: 180px;
+}
+
+.post-dropdown div {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s;
+  border-bottom: 1px solid #eee;
+}
+
+.post-dropdown div:last-child {
+  border-bottom: none;
+}
+
+.post-dropdown div:hover {
+  background-color: #f0f2f5;
+}
+
+/* Reactions Popup */
+/* Reactions Popup */
+.reactions-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  padding: 5px 10px;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 5px;
+  z-index: 10;
+  animation: popIn 0.2s ease-out;
+}
+
+/* 👈 এই ব্রিজটি মাউস হোভার করার ফাঁকা জায়গা ঢেকে রাখবে */
+.reactions-popup::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 15px; /* ১৫ পিক্সেল নিচে পর্যন্ত অদৃশ্য ব্রিজ */
+  background: transparent;
+}
+
+.reactions-popup span {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.reactions-popup span:hover {
+  transform: scale(1.3);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.reactions-popup span {
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.reactions-popup span:hover {
+  transform: scale(1.3);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
